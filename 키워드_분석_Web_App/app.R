@@ -56,7 +56,6 @@
                      choices = c(Head = "head",All = "all"),
                      selected = "head"),
         textInput("s_words", "스탑워드",value = ""),
-        textInput("e_words", "포함단어",value = ""),
         actionButton("do", "분석실행"), 
         width=2
       ),
@@ -67,7 +66,7 @@
                     tabPanel("데이터", DT::dataTableOutput("data")),
                     tabPanel("전체 빈도수", tableOutput("result"),downloadButton("freq_dBtn", "Download")),
                     tabPanel("일별 빈도수", dataTableOutput("result2"),downloadButton("freq_dBtn2", "Download")),
-                    tabPanel("일별 트랜드", plotlyOutput("result3"),downloadButton("freq_dBtn3", "Download"))
+                    tabPanel("일별 트랜드", plotlyOutput("result3"))
                     
         )
       )
@@ -79,10 +78,9 @@
   
   s_date <- Sys.Date()
   rn <- sample(1:100000000,1)
-  fn <- paste("./result/morph_", s_date,"__",rn,".xlsx",sep="")
-  fn2 <- paste("./result/freq_", s_date,"__",rn,".xlsx",sep="")
-  fn3 <- paste("./result/freq_day_", s_date,"__",rn,".xlsx",sep="")
-  fn4 <- paste("./result/freq_trends_", s_date,"__",rn,".xlsx",sep="")
+  fn <- paste("./result/freq_", s_date,"__",rn,".xlsx",sep="")
+  fn2 <- paste("./result/freq_day_", s_date,"__",rn,".xlsx",sep="")
+  fn3 <- paste("./result/freq_trends_", s_date,"__",rn,".xlsx",sep="")
   df <- NULL
   
   strsplit_space <- function(x)
@@ -133,7 +131,8 @@
           text <- unlist(lapply(text,paste,collapse=" "))
         }
         
-        result_mat <- data.frame(text)     
+        result_mat <- data.frame(text) 
+        write_xlsx(result_mat, path = fn2)
         result_mat
       })      
       
@@ -154,7 +153,7 @@
         m <- cbind(dateList,m)
         
         result <- aggregate(.~dateList, m ,sum)
-        write_xlsx(result, path = fn3)
+        write_xlsx(result, path = fn2)
         
         freq_sum <- apply(subset(result,select=-dateList),2,sum)
         
@@ -205,8 +204,6 @@
         m <- as.matrix(tdm) 
         v <- sort(rowSums(m),decreasing=TRUE) # 빈도수를 기준으로 내림차순 정렬
         d <- data.frame(word = names(v),freq=v)  # 데이터 프레임 생성
-        write_xlsx(d, path = fn2)
-        print("끝")
         return(d)
       })
       
@@ -225,43 +222,25 @@
         p1()
       })
       
-    
-    
-      output$result_dBtn <- downloadHandler(
+
+      output$freq_dBtn <- downloadHandler(
         filename = function(){
-          paste("morpthed_text_",rn,".xlsx",sep="")
+          paste("freq_text_all_",rn,".xlsx",sep="")
         },
         content = function(file){
           file.copy(fn, file)
-        }
-      
-      )
-      output$freq_dBtn <- downloadHandler(
-        filename = function(){
-          paste("freq_text_",rn,".xlsx",sep="")
-        },
-        content = function(file){
-          file.copy(fn2, file)
         }
       )
       
       output$freq_dBtn2 <- downloadHandler(
         filename = function(){
-          paste("freq_text2_",rn,".xlsx",sep="")
+          paste("freq_text_day_",rn,".xlsx",sep="")
         },
         content = function(file){
           file.copy(fn2, file)
         }
       )
       
-      output$freq_dBtn3 <- downloadHandler(
-        filename = function(){
-          paste("freq_text2_",rn,".xlsx",sep="")
-        },
-        content = function(file){
-          file.copy(fn2, file)
-        }
-      )
       
     })
     
